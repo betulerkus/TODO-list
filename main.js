@@ -7,7 +7,6 @@ const todoList = document.querySelectorAll(".card-body")[1].children[2];
 let todosInLocal =[];
 runEvents();
 
-
 function runEvents(){
     
     addForm.addEventListener("submit", addNewTodoFunc); 
@@ -48,15 +47,16 @@ function addNewTodoFunc(e) {
         //Create To-Do
         const todoLi= document.createElement("li");
         todoLi.className="list-group-item d-flex justify-content-between";
-
+        todoLi.style.border="0px";
         const todoDiv1 = document.createElement("div");
-        todoDiv1.textContent=newValue;
-        
+        todoDiv1.textContent=newValue.split(" ---",1);
+
         const todoDiv2 = document.createElement("div");
 
         const todoCheck =document.createElement("input");
         todoCheck.type="checkbox";
         todoCheck.className="check"
+        
 
         const todoA2 =document.createElement("a");
         todoA2.href="#";
@@ -73,7 +73,13 @@ function addNewTodoFunc(e) {
         
         const todoI3=document.createElement("i");
         todoI3.className="fa fa-remove";
-        
+            if (newValue.includes(" ---checked")) {
+            todoI2.style.color="#E8E8E8";
+            todoI3.style.color="#E8E8E8";
+            todoCheck.checked=true;
+            todoLi.style.textDecoration="line-through";
+            todoLi.style.color="#E8E8E8";
+            }
         todoLi.appendChild(todoDiv1);
 
         todoLi.appendChild(todoDiv2);
@@ -86,7 +92,9 @@ function addNewTodoFunc(e) {
     // Add to Local Storage
     function addTodoLocalS(newValue) {
         checkLocalStorage();
-        todosInLocal.push(newValue);
+        // todosInLocal.push("{todo: \""+newValue+"\", durum: \" unchecked\"}");
+        todosInLocal.push(newValue+" ---unchecked");
+
         localStorage.setItem("todosInLocal", JSON.stringify(todosInLocal));
     }
 
@@ -106,8 +114,10 @@ function addNewTodoFunc(e) {
         popupDiv.className=classAlert;
         popupDiv.role="alert";
         popupDiv.textContent=textAlert;
+        popupDiv.style.marginTop="20px";
 
-        document.querySelector("#hr").after(popupDiv);
+        addForm.appendChild(popupDiv);
+        // document.querySelector("#hr").after(popupDiv);
 
         setTimeout(function() {
             popupDiv.remove();
@@ -125,7 +135,6 @@ function searchTodoFunc(){
                 findTodoList.push(todo);
             }
         })
-        console.log(findTodoList);
         while (todoList.hasChildNodes()) {
             todoList.removeChild(todoList.firstChild)
         }
@@ -137,25 +146,43 @@ function searchTodoFunc(){
 function iconsEvent(e){
     switch (e.target.className) {
         case "check":
-            //  When Checked - Mark as TODO
-            if (e.target.parentElement.parentElement.style.textDecoration=="line-through") {
-                (e.target.parentElement.parentElement).style.textDecoration="";
-                (e.target.parentElement.parentElement).style.color = "";
-                (e.target).style.color="";
-                e.target.nextSibling.firstChild.style.color="";
-                e.target.nextSibling.nextSibling.firstChild.style.color="";
+        //  When Checked - Mark as TODO
+            // In UI
+            if (e.target.checked==false) {
+
+                unCheckedTodoUI(e.target);
+            //IN Local Storage
+            const todoText = e.target.parentElement.previousSibling.textContent;
+            checkLocalStorage()
+            for (let i = 0; i < todosInLocal.length; i++) {
+                if (todosInLocal[i].split(" ---",1)==todoText) {
+                    todosInLocal[i]= todosInLocal[i].split(" ---",1)+" ---unChecked";
+                    localStorage.setItem("todosInLocal",JSON.stringify(todosInLocal));
+                    break;
+                }
+                
             }
-            else{
-            // When Unchecked - Mark as done
-            (e.target.parentElement.parentElement).style.textDecoration = "line-through";
-            (e.target.parentElement.parentElement).style.color = "gray";
-            (e.target).style.color="gray";
-            e.target.nextSibling.firstChild.style.color="gray";
-            e.target.nextSibling.nextSibling.firstChild.style.color="gray";
+        }
+        // When Unchecked - Mark as done
+        else{
+            // In UI
+            checkedTodoUI (e.target);
+            //IN Local Storage
+            const todoText = e.target.parentElement.previousSibling.textContent;
+            checkLocalStorage()
+            for (let i = 0; i < todosInLocal.length; i++) {
+                if (todosInLocal[i].split(" ---",1)==todoText) {
+                    todosInLocal[i]= todosInLocal[i].split(" ---",1)+" ---checked";
+                    localStorage.setItem("todosInLocal",JSON.stringify(todosInLocal))
+                    break;
+                }
+                
             }
+        }
+
+
           break;
         case "fa fa-pencil":
-            console.log("Düzenlenecek");
             let target =e.target.parentElement.parentElement.previousSibling;
             let oldText =e.target.parentElement.parentElement.previousSibling.textContent;
             e.target.parentElement.parentElement.previousSibling.textContent = "";
@@ -206,11 +233,31 @@ function iconsEvent(e){
 }
 
 function clearAllFunc(){
-    // Clear from Local Storage 
-    localStorage.clear();
-    
-    //Clear All UI
-    while (todoList.childNodes.length>1) {
-        todoList.firstElementChild.remove();    
+    let sure = confirm("Are you sure clear all?");
+    if (sure) {
+        // Clear from LocalStorage 
+        localStorage.clear();
+        
+        //Clear from UI
+        while (todoList.childNodes.length>1) {
+            todoList.firstElementChild.remove();    
+        }
     }
+    
+}
+
+function checkedTodoUI (e){
+    (e.parentElement.parentElement).style.textDecoration = "line-through";
+    (e.parentElement.parentElement).style.color = "#E8E8E8";
+    (e).style.color="#E8E8E8";
+    e.nextSibling.firstChild.style.color="#E8E8E8";
+    e.nextSibling.nextSibling.firstChild.style.color="#E8E8E8";
+}
+
+function unCheckedTodoUI(e){
+    (e.parentElement.parentElement).style.textDecoration="";
+    (e.parentElement.parentElement).style.color = "";
+    e.style.color="";
+    e.nextSibling.firstChild.style.color="";
+    e.nextSibling.nextSibling.firstChild.style.color="";
 }
